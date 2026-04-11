@@ -1,5 +1,5 @@
 import tkinter as tk
-from Connectar_bd import obtener_conexion
+from Connectar_bd import obtener_conexion 
 from tkinter import messagebox, ttk 
 from Cliente_Correo import ClienteCorreo, Cuenta, Correo, Contacto
 
@@ -8,61 +8,60 @@ class AppCorreo:
         self.cliente = cliente
         self.root = root
         self.root.title(f"UNSADA Mail - {self.cliente.cuenta.usuario}")
-        self.root.geometry("600x550") # Aumentamos un poco el alto para que entre todo cómodo
-        self.root.configure(bg="#f0f0f0")
+        self.root.geometry("700x500") 
+        self.root.configure(bg="#f5f6f7") 
 
-        # --- Encabezado ---
-        self.header = tk.Frame(root, bg="#14b685", height=60)
+        # --- 1. Encabezado ---
+        self.header = tk.Frame(root, bg="#14b685", height=50) 
         self.header.pack(fill="x")
         
-        tk.Label(self.header, text="Mi Correo Electrónico", bg="#960ace", fg="white", 
-                 font=("Arial", 16, "bold")).pack(pady=10)
+        tk.Label(self.header, text="UNSADA Mail", bg="#14b685", fg="white", 
+                 font=("Segoe UI", 14, "bold")).pack(pady=10, padx=20, side="left")
 
-        # --- Panel de Información (Atributos del Objeto) ---
-        self.info_frame = tk.LabelFrame(root, text=" Estado de la Cuenta ", padx=20, pady=10, bg="white")
-        self.info_frame.pack(pady=20, padx=20, fill="x")
+        # --- 2. Barra de Herramientas (Botones arriba) ---
+        self.toolbar = tk.Frame(root, bg="white", bd=1, relief="raised")
+        self.toolbar.pack(fill="x")
+
+        style = ttk.Style()
+        style.configure("Tool.TButton", font=("Segoe UI", 9), padding=5)
+
+        # Botones alineados horizontalmente
+        ttk.Button(self.toolbar, text="📥 Recibir", command=self.simular_recepcion, style="Tool.TButton").pack(side="left", padx=5, pady=5)
+        ttk.Button(self.toolbar, text="📝 Redactar", command=self.ventana_enviar, style="Tool.TButton").pack(side="left", padx=5, pady=5)
+        ttk.Button(self.toolbar, text="👤 +Contacto", command=self.ventana_contacto, style="Tool.TButton").pack(side="left", padx=5, pady=5)
+        ttk.Button(self.toolbar, text="📩 Ver Recibidos", command=self.ventana_bandeja_entrada, style="Tool.TButton").pack(side="left", padx=5, pady=5)
+
+        # 3. Panel de Información (Estado de cuenta) 
+        self.info_frame = tk.LabelFrame(root, text=" Resumen de Actividad ", padx=20, pady=20, bg="white", font=("Segoe UI", 10, "bold"))
+        self.info_frame.pack(pady=30, padx=30, fill="both", expand=True)
 
         self.resumen_text = tk.StringVar()
         self.resumen_text.set(self.obtener_resumen())
         
+  
         self.lbl_resumen = tk.Label(self.info_frame, textvariable=self.resumen_text, 
-                                    justify="left", bg="white", font=("Courier", 10))
-        self.lbl_resumen.pack(side="left")
-
-        # --- Panel de Acciones (Métodos del Objeto) ---
-        self.btn_frame = tk.Frame(root, bg="#f38755")
-        self.btn_frame.pack(pady=10)
-
-        style = ttk.Style()
-        style.configure("TButton", font=("Arial", 10))
-
-        # Fila 0: Botones principales
-        ttk.Button(self.btn_frame, text="📥 Recibir Correo", command=self.simular_recepcion).grid(row=0, column=0, padx=5, pady=5)
-        ttk.Button(self.btn_frame, text="📝 Enviar Correo", command=self.ventana_enviar).grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(self.btn_frame, text="👤 Agregar Contacto", command=self.ventana_contacto).grid(row=0, column=2, padx=5, pady=5)
-
-        # Fila 1: Botón de Visualización (EL QUE PEDISTE AGREGAR)
-        ttk.Button(self.btn_frame, text="📩 Ver Recibidos", 
-                   command=self.ventana_bandeja_entrada).grid(row=1, column=1, pady=15)
+                                    justify="left", bg="white", font=("Segoe UI", 11), fg="#333")
+        self.lbl_resumen.pack(anchor="nw")
 
     def obtener_resumen(self):
-        # Acciones requeridas por la consigna 
-        return (f"Usuario: {self.cliente.cuenta.usuario}\n"
-                f"----------------------------------\n"
-                f"Total de correos: {self.cliente.cantidad_total_correos()}\n"
-                f"Recibidos: {self.cliente.cantidad_recibidos()}\n"
-                f"No leídos: {self.cliente.cantidad_no_leidos()}\n"
-                f"Contactos: {len(self.cliente.contactos)}")
+        return (f"👤 Usuario: {self.cliente.cuenta.usuario}\n"
+                f"📧 Dirección: {self.cliente.cuenta.direccion}\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📊 Estadística de Correos:\n"
+                f"   • Total de correos: {self.cliente.cantidad_total_correos()}\n"
+                f"   • Recibidos: {self.cliente.cantidad_recibidos()}\n"
+                f"   • Mensajes sin leer: {self.cliente.cantidad_no_leidos()}\n"
+                f"   • Agenda de contactos: {len(self.cliente.contactos)}")
 
     def actualizar_interfaz(self):
         self.resumen_text.set(self.obtener_resumen())
 
     def simular_recepcion(self):
         # Creamos una instancia de Correo
-        nuevo = Correo("Aviso de Examen", "El parcial es el lunes.", "bedelia@unsada.edu.ar", [self.cliente.cuenta.direccion])
+        nuevo = Correo("Aviso de Examen", "El parcial es el lunes 17:00hs. ", "Paula@unsada.edu.ar", [self.cliente.cuenta.direccion])
         self.cliente.recibidos.append(nuevo)
         self.actualizar_interfaz()
-        messagebox.showinfo("Bandeja de Entrada", "Has recibido un nuevo correo de Bedelía.")
+        messagebox.showinfo("Bandeja de Entrada", "Has recibido un nuevo correo de Paula.")
 
     def ventana_contacto(self):
         ventana = tk.Toplevel(self.root)
@@ -179,7 +178,7 @@ class AppCorreo:
 if __name__ == "__main__":
     from Cliente_Correo import Cuenta
     root = tk.Tk()
-    mi_cuenta = Cuenta("Mónica_Vázquez", "monivaz@estudiante.unsada.edu.ar", "pop.gmail.com", "smtp.gmail.com")
+    mi_cuenta = Cuenta("Grupo2 Arrecifes", "Grupo2_arrecifes@estudiante.unsada.edu.ar", "pop.gmail.com", "smtp.gmail.com")
     mi_cliente = ClienteCorreo(mi_cuenta)
     
     app = AppCorreo(root, mi_cliente)
