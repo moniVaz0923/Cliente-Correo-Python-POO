@@ -12,10 +12,10 @@ class AppCorreo:
         self.root.configure(bg="#f0f0f0")
 
         # --- Encabezado ---
-        self.header = tk.Frame(root, bg="#2c3e50", height=60)
+        self.header = tk.Frame(root, bg="#14b685", height=60)
         self.header.pack(fill="x")
         
-        tk.Label(self.header, text="Mi Correo Electrónico", bg="#2c3e50", fg="white", 
+        tk.Label(self.header, text="Mi Correo Electrónico", bg="#960ace", fg="white", 
                  font=("Arial", 16, "bold")).pack(pady=10)
 
         # --- Panel de Información (Atributos del Objeto) ---
@@ -30,7 +30,7 @@ class AppCorreo:
         self.lbl_resumen.pack(side="left")
 
         # --- Panel de Acciones (Métodos del Objeto) ---
-        self.btn_frame = tk.Frame(root, bg="#f0f0f0")
+        self.btn_frame = tk.Frame(root, bg="#f38755")
         self.btn_frame.pack(pady=10)
 
         style = ttk.Style()
@@ -46,7 +46,7 @@ class AppCorreo:
                    command=self.ventana_bandeja_entrada).grid(row=1, column=1, pady=15)
 
     def obtener_resumen(self):
-        # Acciones requeridas por la consigna [cite: 175, 180]
+        # Acciones requeridas por la consigna 
         return (f"Usuario: {self.cliente.cuenta.usuario}\n"
                 f"----------------------------------\n"
                 f"Total de correos: {self.cliente.cantidad_total_correos()}\n"
@@ -58,7 +58,7 @@ class AppCorreo:
         self.resumen_text.set(self.obtener_resumen())
 
     def simular_recepcion(self):
-        # Creamos una instancia de Correo [cite: 230]
+        # Creamos una instancia de Correo
         nuevo = Correo("Aviso de Examen", "El parcial es el lunes.", "bedelia@unsada.edu.ar", [self.cliente.cuenta.direccion])
         self.cliente.recibidos.append(nuevo)
         self.actualizar_interfaz()
@@ -105,7 +105,7 @@ class AppCorreo:
         txt_mensaje.pack(pady=5)
 
         def procesar_envio():
-            # Definimos atributos del objeto Correo [cite: 40, 198]
+            # Definimos atributos del objeto Correo
             nuevo_envio = Correo(
                 asunto=ent_asunto.get(),
                 mensaje=txt_mensaje.get("1.0", tk.END),
@@ -114,34 +114,34 @@ class AppCorreo:
                 leido=True 
             )
             
-            # El objeto realiza la acción de enviar [cite: 141, 218]
+            # El objeto realiza la acción de enviar
             self.cliente.enviar_correo(nuevo_envio)
             self.actualizar_interfaz()
             ventana.destroy()
             messagebox.showinfo("Enviado", "El correo se ha movido a la carpeta de Enviados.")
 
         tk.Button(ventana, text="🚀 Enviar Ahora", command=procesar_envio, 
-                  bg="#3498db", fg="white", font=("Arial", 10, "bold")).pack(pady=10)
+                  bg="#67addb", fg="white", font=("Arial", 10, "bold")).pack(pady=10)
     
     def ventana_bandeja_entrada(self):
-        # Creamos ventana para listar los objetos Correo [cite: 140, 228]
+        # Creamos ventana para listar los objetos Correo
         self.ventana_lista = tk.Toplevel(self.root)
         self.ventana_lista.title("Bandeja de Entrada")
         self.ventana_lista.geometry("400x400")
 
         tk.Label(self.ventana_lista, text="Correos Recibidos", font=("Arial", 12, "bold")).pack(pady=10)
 
-        # Listbox para visualizar la colección de objetos [cite: 175]
+        # Listbox para visualizar la colección de objetos
         self.lista_visual = tk.Listbox(self.ventana_lista, width=50, height=15)
         self.lista_visual.pack(pady=5, padx=10)
 
-        # Accedemos a las propiedades de cada objeto en la lista [cite: 291, 293]
+        # Accedemos a las propiedades de cada objeto en la lista
         for correo in self.cliente.recibidos:
             estado = "[LEÍDO]" if correo.leido else "[NUEVO]"
             self.lista_visual.insert(tk.END, f"{estado} {correo.asunto} - De: {correo.remitente}")
 
         tk.Button(self.ventana_lista, text="📖 Leer Correo Seleccionado", 
-                  command=self.leer_correo_detalle, bg="#f1c40f").pack(pady=10)
+                  command=self.leer_correo_detalle, bg="#d67dbc").pack(pady=10)
 
     def leer_correo_detalle(self):
         seleccion = self.lista_visual.curselection()
@@ -152,7 +152,7 @@ class AppCorreo:
         indice = seleccion[0]
         correo_obj = self.cliente.recibidos[indice]
 
-        # Cambiamos el valor de la propiedad 'leido' [cite: 294]
+        # Cambiamos el valor de la propiedad 'leido' 
         correo_obj.leido = True
         self.actualizar_interfaz() 
 
@@ -179,7 +179,7 @@ class AppCorreo:
 if __name__ == "__main__":
     from Cliente_Correo import Cuenta
     root = tk.Tk()
-    mi_cuenta = Cuenta("Mónica_Informatica", "moni@estudiante.unsada.edu.ar", "pop.gmail.com", "smtp.gmail.com")
+    mi_cuenta = Cuenta("Mónica_Vázquez", "monivaz@estudiante.unsada.edu.ar", "pop.gmail.com", "smtp.gmail.com")
     mi_cliente = ClienteCorreo(mi_cuenta)
     
     app = AppCorreo(root, mi_cliente)
