@@ -11,3 +11,4 @@ def obtener_conexion():
     except mysql.connector.Error as err:
         print(f"Error de conexión: {err}")
         return None
+    
