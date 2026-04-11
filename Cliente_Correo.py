@@ -28,7 +28,7 @@ class ClienteCorreo(object):
         self.enviados = []
         self.contactos = [] 
         self.db = obtener_conexion() 
-        # Al instanciar el objeto, cargamos lo que ya existe en MySQL [cite: 230]
+        # Al instanciar el objeto, cargamos lo que ya existe en MySQL a memoria para trabajar con objetos en la aplicación
         self.cargar_datos_iniciales()
 
     def cargar_datos_iniciales(self):
@@ -59,7 +59,7 @@ class ClienteCorreo(object):
                 print(f"Error al cargar datos: {e}")
 
     def agregar_contacto_db(self, contacto):
-        """Guarda un nuevo objeto Contacto en MySQL [cite: 141]"""
+        """Guarda un nuevo objeto Contacto en MySQL """
         if self.db and self.db.is_connected():
             try:
                 cursor = self.db.cursor()
@@ -71,7 +71,7 @@ class ClienteCorreo(object):
         self.contactos.append(contacto)
 
     def enviar_correo(self, unCorreo):
-        """Guarda un objeto Correo en la carpeta 'enviados' de MySQL [cite: 141]"""
+        """Guarda un objeto Correo en la carpeta 'enviados' de MySQL"""
         if self.db and self.db.is_connected():
             try:
                 cursor = self.db.cursor()
@@ -83,7 +83,7 @@ class ClienteCorreo(object):
                 print(f"Error MySQL: {e}")
         self.enviados.append(unCorreo)
 
-    # Métodos de conteo (Capacidades del objeto) [cite: 140]
+    # Métodos de conteo (Capacidades del objeto)
     def cantidad_total_correos(self):
         return len(self.recibidos) + len(self.enviados)
 
