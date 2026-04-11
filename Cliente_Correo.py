@@ -92,3 +92,4 @@ class ClienteCorreo(object):
 
     def cantidad_no_leidos(self):
         return len([c for c in self.recibidos if not c.leido])
+    
