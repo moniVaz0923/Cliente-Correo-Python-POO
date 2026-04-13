@@ -1,4 +1,5 @@
 # --- Cliente_Correo.py (VERSIÓN LIMPIA PARA GITHUB) ---
+from Connectar_bd import obtener_conexion
 
 class Cuenta:
     def __init__(self, usuario, direccion, servidor_pop, servidor_smtp):
