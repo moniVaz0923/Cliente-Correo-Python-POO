@@ -1,1 +1,39 @@
-{"contactos": [{"nombre": "monica ", "apellido": "vazquez", "correo": "mv@alumnos.com"}], "recibidos": [{"remitente": "Rectorado UNSADA", "destinatario": "Grupo2_arrecifes@estudiante.unsada.edu.ar", "asunto": "Novedades del cuatrimestre", "mensaje": "Estimado alumno, le informamos que las mesas de ex\u00e1menes est\u00e1n habilitadas. \u00a1Saludos!", "leido": true}, {"remitente": "Rectorado UNSADA", "destinatario": "Grupo2_arrecifes@estudiante.unsada.edu.ar", "asunto": "Novedades del cuatrimestre", "mensaje": "Estimado alumno, le informamos que las mesas de ex\u00e1menes est\u00e1n habilitadas. \u00a1Saludos!", "leido": true}, {"remitente": "Rectorado UNSADA", "destinatario": "Grupo2_arrecifes@estudiante.unsada.edu.ar", "asunto": "Novedades del cuatrimestre", "mensaje": "Estimado alumno, le informamos que las mesas de ex\u00e1menes est\u00e1n habilitadas. \u00a1Saludos!", "leido": true}], "enviados": [{"remitente": "Grupo2_arrecifes@estudiante.unsada.edu.ar", "destinatario": "mv@alumnos.com", "asunto": "consulta", "mensaje": "como va con los trabajis practicos?", "leido": true}]}
+{
+    "contactos": [
+        {
+            "nombre": "monica ",
+            "apellido": "vazquez",
+            "correo": "mv@alumnos.com"
+        },
+        {
+            "nombre": "Estefania",
+            "apellido": "Coria",
+            "correo": "ecoria@alumnos.com"
+        }
+    ],
+    "recibidos": [
+        {
+            "remitente": "Rectorado UNSADA",
+            "destinatario": "Grupo2_arrecifes@estudiante.unsada.edu.ar",
+            "asunto": "Novedades de la cursada",
+            "mensaje": "Hola grupo, les avisamos que ya est\u00e1n cargadas las notas. \u00a1Saludos!",
+            "leido": true
+        }
+    ],
+    "enviados": [
+        {
+            "remitente": "Grupo2_arrecifes@estudiante.unsada.edu.ar",
+            "destinatario": "Rectorado UNSADA",
+            "asunto": "Re: Novedades de la cursada",
+            "mensaje": "ok gracias por el aviso.",
+            "leido": false
+        },
+        {
+            "remitente": "Grupo2_arrecifes@estudiante.unsada.edu.ar",
+            "destinatario": "mv@alumnos.com",
+            "asunto": "Aviso",
+            "mensaje": "Trabajo practico terminado. listo para entrega.",
+            "leido": false
+        }
+    ]
+}
