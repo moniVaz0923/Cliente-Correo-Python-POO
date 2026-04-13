@@ -143,19 +143,21 @@ class AppCorreo:
     def agregar_contacto(self):
         v = tk.Toplevel(self.root)
         v.title("Nuevo Contacto")
-        v.geometry("500x350")
+        v.geometry("400x250")
         v.configure(bg="white")
         
         tk.Label(v, text="Nombre:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
         ent_nom = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_nom.pack()
-        tk.Label(v, text="Apellido:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
-        ent_ape = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_ape.pack()
+        
+        tk.Label(v, text="Nombre:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
+        ent_nom = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_nom.pack()
+        
+        
         tk.Label(v, text="Correo Electrónico:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(10,2))
         ent_cor = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_cor.pack()
         
         def guardar():
             n = ent_nom.get()
-            a = ent_ape.get()
             c = ent_cor.get()
             if n and c:
                 nuevo = ContactoVirtual(n, c)
