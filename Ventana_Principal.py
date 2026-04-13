@@ -6,7 +6,7 @@ from Cliente_Correo import ClienteCorreo, Cuenta
 
 # --- CLASES VIRTUALES CON CAPACIDAD DE GUARDADO ---
 class ContactoVirtual:
-    def __init__(self, nombre,apellido,correo):
+    def __init__(self, nombre, apellido, correo):
         self.nombre = nombre
         self.apellido = apellido
         self.correo = correo
@@ -16,15 +16,16 @@ class ContactoVirtual:
         return {"nombre": self.nombre, "apellido": self.apellido, "correo": self.correo}
 
 class CorreoVirtual:
-    def __init__(self, remitente, destinatario, asunto, mensaje):
+    def __init__(self, remitente, destinatario, asunto, mensaje, leido=False):
         self.remitente = remitente
         self.destinatario = destinatario
         self.asunto = asunto
         self.mensaje = mensaje
         self.cuerpo = mensaje
+        self.leido = leido 
 
     def to_dict(self):
-        return {"remitente": self.remitente, "destinatario": self.destinatario, "asunto": self.asunto, "mensaje": self.mensaje}
+        return {"remitente": self.remitente, "destinatario": self.destinatario, "asunto": self.asunto, "mensaje": self.mensaje, "leido": self.leido}
 
 class AppCorreo:
     def __init__(self, root, cliente):
@@ -39,7 +40,7 @@ class AppCorreo:
         self.correos_enviados = []
         self.contactos = []
 
-        # ¡NUEVO!: Intentamos cargar los datos guardados de la sesión anterior
+        # Intentamos cargar los datos guardados de la sesión anterior
         self.cargar_datos_locales()
 
         self.root.title(f"UNSADA Mail Pro - {self.usuario}")
@@ -118,11 +119,19 @@ class AppCorreo:
         
         tk.Frame(card, bg="#eeeeee", height=2).pack(fill="x", padx=30, pady=10)
 
+        total_correos = len(self.correos_recibidos) + len(self.correos_enviados)
+        recibidos = len(self.correos_recibidos)
+        enviados = len(self.correos_enviados)
+        contactos = len(self.contactos)
+        no_leidos = sum(1 for c in self.correos_recibidos if getattr(c, 'leido', False) == False)
+
         texto_resumen = (f"👤 Cuenta activa: {self.usuario}\n\n"
                          f"📊 Tu actividad al momento:\n"
-                         f"    • Correos Recibidos: {len(self.correos_recibidos)}\n"
-                         f"    • Correos Enviados: {len(self.correos_enviados)}\n"
-                         f"    • Contactos Guardados: {len(self.contactos)}")
+                         f"    • Total de correos: {total_correos}\n"
+                         f"    • Correos Recibidos: {recibidos}\n"
+                         f"    • Correos Enviados: {enviados}\n"
+                         f"    • Correos No Leídos: {no_leidos}\n"
+                         f"    • Contactos Guardados: {contactos}")
         
         tk.Label(card, text=texto_resumen, font=("Segoe UI", 12), bg="white", 
                  fg="#333333", justify="left").pack(anchor="w", padx=40, pady=10)
@@ -134,15 +143,13 @@ class AppCorreo:
     def agregar_contacto(self):
         v = tk.Toplevel(self.root)
         v.title("Nuevo Contacto")
-        v.geometry("400x250")
+        v.geometry("500x350")
         v.configure(bg="white")
         
         tk.Label(v, text="Nombre:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
         ent_nom = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_nom.pack()
-        
         tk.Label(v, text="Apellido:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
         ent_ape = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_ape.pack()
-        
         tk.Label(v, text="Correo Electrónico:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(10,2))
         ent_cor = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_cor.pack()
         
@@ -150,10 +157,10 @@ class AppCorreo:
             n = ent_nom.get()
             a = ent_ape.get()
             c = ent_cor.get()
-            if n and a and c:
-                nuevo = ContactoVirtual(n, a, c)
+            if n and c:
+                nuevo = ContactoVirtual(n, c)
                 self.contactos.append(nuevo)
-                self.guardar_datos_locales() # ¡SE GUARDA!
+                self.guardar_datos_locales() 
                 messagebox.showinfo("Éxito", f"El contacto {n} fue guardado correctamente.")
                 self.actualizar_dashboard()
                 v.destroy()
@@ -165,7 +172,7 @@ class AppCorreo:
     def ver_contactos(self):
         v = tk.Toplevel(self.root)
         v.title("Mi Libreta de Direcciones")
-        v.geometry("500x350")
+        v.geometry("600x350")
         
         style = ttk.Style()
         style.theme_use('clam')
@@ -183,7 +190,7 @@ class AppCorreo:
     def simular_recepcion(self):
         nuevo_correo = CorreoVirtual("Rectorado UNSADA", self.direccion, "Novedades del cuatrimestre", "Estimado alumno, le informamos que las mesas de exámenes están habilitadas. ¡Saludos!")
         self.correos_recibidos.append(nuevo_correo)
-        self.guardar_datos_locales() # ¡SE GUARDA!
+        self.guardar_datos_locales() 
         self.actualizar_dashboard()
         messagebox.showinfo("Servidor Actualizado", "📥 Has recibido 1 correo nuevo. Revisa tu bandeja de entrada.")
 
@@ -195,7 +202,6 @@ class AppCorreo:
         
         tk.Label(v, text="Para (Elige un contacto o escribe):", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
         
-        # ¡NUEVO! Combobox para elegir contactos guardados
         lista_emails = [c.correo for c in self.contactos]
         ent_p = ttk.Combobox(v, values=lista_emails, width=52)
         ent_p.pack()
@@ -213,7 +219,7 @@ class AppCorreo:
             if dest and asu:
                 nuevo = CorreoVirtual(self.direccion, dest, asu, msj)
                 self.correos_enviados.append(nuevo)
-                self.guardar_datos_locales() # ¡SE GUARDA!
+                self.guardar_datos_locales() 
                 messagebox.showinfo("Enviado", "🚀 El correo fue enviado con éxito.")
                 self.actualizar_dashboard()
                 v.destroy()
@@ -246,16 +252,19 @@ class AppCorreo:
         def leer():
             seleccion = tree.selection()
             if seleccion:
-                item = tree.item(seleccion[0])
-                persona_sel = item['values'][0]
-                asunto_sel = item['values'][1]
+                # ACÁ ESTÁ LA MAGIA: Buscamos por la posición exacta (índice) en la tabla
+                indice = tree.index(seleccion[0])
+                correo_seleccionado = lista_correos[indice]
                 
-                for c in lista_correos:
-                    pers = c.remitente if es_recibido else c.destinatario
-                    if pers == persona_sel and c.asunto == asunto_sel:
-                        etiqueta_pers = "Remitente" if es_recibido else "Destinatario"
-                        messagebox.showinfo(f"Lectura de Correo", f"{etiqueta_pers}: {persona_sel}\nAsunto: {asunto_sel}\n\n{'-'*40}\n{c.mensaje}")
-                        break
+                # Si lo leés y estaba sin leer, se marca y se descuenta
+                if es_recibido and not correo_seleccionado.leido:
+                    correo_seleccionado.leido = True
+                    self.guardar_datos_locales()
+                    self.actualizar_dashboard()
+                        
+                etiqueta_pers = "Remitente" if es_recibido else "Destinatario"
+                persona = correo_seleccionado.remitente if es_recibido else correo_seleccionado.destinatario
+                messagebox.showinfo(f"Lectura de Correo", f"{etiqueta_pers}: {persona}\nAsunto: {correo_seleccionado.asunto}\n\n{'-'*40}\n{correo_seleccionado.mensaje}")
             else:
                 messagebox.showwarning("Atención", "Selecciona un correo para leerlo.")
                 

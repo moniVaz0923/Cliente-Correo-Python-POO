@@ -39,3 +39,19 @@ class ClienteCorreo:
         
     def enviar_correo(self, correo):
         pass
+    
+    def cantidad_total_correos(self):
+        return len(self.recibidos) + len(self.enviados) 
+
+    def cantidad_recibidos(self):
+        return len(self.recibidos) 
+
+    def cantidad_enviados(self):
+        return len(self.enviados) 
+
+    def cantidad_no_leidos(self):
+        # Filtra los correos en la carpeta recibidos que tengan la propiedad leido en False
+        return len([c for c in self.recibidos if not c.leido]) 
+
+    def cantidad_contactos(self):
+        return len(self.contactos)
