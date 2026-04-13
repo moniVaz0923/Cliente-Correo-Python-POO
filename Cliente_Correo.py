@@ -47,7 +47,7 @@ class ClienteCorreo(object):
                 cursor.execute("SELECT * FROM correos")
                 for fila in cursor.fetchall():
                     # Convertimos el texto de la DB de nuevo a una lista de Python
-                    dests = fila['destinatarios'].split(", ")
+                    dests = fila['destinatario'].split(", ")
                     correo = Correo(fila['asunto'], fila['mensaje'], fila['remitente'], dests, bool(fila['leido']))
                     
                     if fila['tipo'] == 'recibido':
@@ -75,8 +75,8 @@ class ClienteCorreo(object):
         if self.db and self.db.is_connected():
             try:
                 cursor = self.db.cursor()
-                sql = "INSERT INTO correos (asunto, mensaje, remitente, destinatarios, leido, tipo) VALUES (%s, %s, %s, %s, %s, %s)"
-                dest_str = ", ".join(unCorreo.destinatarios)
+                sql = "INSERT INTO correos (asunto, mensaje, remitente, destinatario, leido, tipo) VALUES (%s, %s, %s, %s, %s, %s)"
+                dest_str = ", ".join(unCorreo.destinatario)
                 cursor.execute(sql, (unCorreo.asunto, unCorreo.mensaje, unCorreo.remitente, dest_str, unCorreo.leido, 'enviado'))
                 self.db.commit()
             except Exception as e:
