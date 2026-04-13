@@ -1,259 +1,275 @@
 import tkinter as tk
-from Connectar_bd import obtener_conexion 
 from tkinter import messagebox, ttk 
-from Cliente_Correo import ClienteCorreo, Cuenta, Correo, Contacto
+import json
+import os
+from Cliente_Correo import ClienteCorreo, Cuenta
+
+# --- CLASES VIRTUALES CON CAPACIDAD DE GUARDADO ---
+class ContactoVirtual:
+    def __init__(self, nombre,apellido,correo):
+        self.nombre = nombre
+        self.apellido = apellido
+        self.correo = correo
+        self.email = correo 
+
+    def to_dict(self):
+        return {"nombre": self.nombre, "apellido": self.apellido, "correo": self.correo}
+
+class CorreoVirtual:
+    def __init__(self, remitente, destinatario, asunto, mensaje):
+        self.remitente = remitente
+        self.destinatario = destinatario
+        self.asunto = asunto
+        self.mensaje = mensaje
+        self.cuerpo = mensaje
+
+    def to_dict(self):
+        return {"remitente": self.remitente, "destinatario": self.destinatario, "asunto": self.asunto, "mensaje": self.mensaje}
 
 class AppCorreo:
     def __init__(self, root, cliente):
         self.cliente = cliente
         self.root = root
-        self.root.title(f"UNSADA Mail - {self.cliente.cuenta.usuario}")
-        self.root.geometry("700x500") 
-        self.root.configure(bg="#f5f6f7") 
-
-# --- 1. Variables de Interfaz (IMPORTANTE para que no de AttributeError) ---
-        self.resumen_text = tk.StringVar()
-        self.resumen_text.set(self.obtener_resumen())
-
-        # --- 1. Encabezado ---
-        self.header = tk.Frame(root, bg="#14b685", height=50) 
-        self.header.pack(fill="x")
         
-        tk.Label(self.header, text="UNSADA Mail", bg="#14b685", fg="white", 
-                 font=("Segoe UI", 14, "bold")).pack(pady=10, padx=20, side="left")
+        self.usuario = getattr(cliente.cuenta, 'usuario', 'Usuario')
+        self.direccion = getattr(cliente.cuenta, 'direccion', 'correo@unsada.edu.ar')
+        
+        # Iniciamos listas vacías
+        self.correos_recibidos = []
+        self.correos_enviados = []
+        self.contactos = []
 
-        # --- 2. Barra de Herramientas (Botones arriba) ---
-        self.toolbar = tk.Frame(root, bg="white", bd=1, relief="raised")
-        self.toolbar.pack(fill="x")
+        # ¡NUEVO!: Intentamos cargar los datos guardados de la sesión anterior
+        self.cargar_datos_locales()
 
+        self.root.title(f"UNSADA Mail Pro - {self.usuario}")
+        self.root.geometry("850x600") 
+        self.root.configure(bg="#f0f2f5")
+
+        self.construir_interfaz()
+
+    # --- SISTEMA DE GUARDADO AUTOMÁTICO (PERSISTENCIA) ---
+    def cargar_datos_locales(self):
+        if os.path.exists("datos_app.json"):
+            try:
+                with open("datos_app.json", "r") as f:
+                    data = json.load(f)
+                    self.contactos = [ContactoVirtual(**c) for c in data.get("contactos", [])]
+                    self.correos_recibidos = [CorreoVirtual(**c) for c in data.get("recibidos", [])]
+                    self.correos_enviados = [CorreoVirtual(**c) for c in data.get("enviados", [])]
+            except Exception:
+                pass # Si falla, simplemente inicia en blanco
+
+    def guardar_datos_locales(self):
+        data = {
+            "contactos": [c.to_dict() for c in self.contactos],
+            "recibidos": [c.to_dict() for c in self.correos_recibidos],
+            "enviados": [c.to_dict() for c in self.correos_enviados]
+        }
+        with open("datos_app.json", "w") as f:
+            json.dump(data, f)
+
+    def construir_interfaz(self):
+        # --- ENCABEZADO ---
+        header = tk.Frame(self.root, bg="#14b685", height=70) 
+        header.pack(fill="x")
+        
+        tk.Label(header, text="✨ UNSADA Mail Pro", bg="#14b685", fg="white", 
+                 font=("Segoe UI", 18, "bold")).pack(side="left", padx=25, pady=15)
+        tk.Label(header, text=self.direccion, bg="#14b685", fg="#d1f2e6", 
+                 font=("Segoe UI", 11, "italic")).pack(side="right", padx=25, pady=15)
+
+        # --- BARRA DE HERRAMIENTAS ---
+        toolbar = tk.Frame(self.root, bg="white", pady=10, highlightbackground="#dcdde1", highlightthickness=1)
+        toolbar.pack(fill="x")
+
+        frame_correos = tk.Frame(toolbar, bg="white")
+        frame_correos.pack(side="left", padx=15)
+        
+        frame_contactos = tk.Frame(toolbar, bg="white")
+        frame_contactos.pack(side="right", padx=15)
+
+        btn_style = {"font": ("Segoe UI", 9, "bold"), "fg": "white", "bg": "#2c3e50", "relief": "flat", "padx": 10, "pady": 6, "cursor": "hand2"}
+        btn_green = {"font": ("Segoe UI", 9, "bold"), "fg": "white", "bg": "#14b685", "relief": "flat", "padx": 10, "pady": 6, "cursor": "hand2"}
+
+        tk.Button(frame_correos, text="📥 Recibir", command=self.simular_recepcion, **btn_style).pack(side="left", padx=5)
+        tk.Button(frame_correos, text="📩 Recibidos", command=self.ver_recibidos, **btn_style).pack(side="left", padx=5)
+        tk.Button(frame_correos, text="📤 Enviados", command=self.ver_enviados, **btn_style).pack(side="left", padx=5)
+        tk.Button(frame_correos, text="📝 Redactar", command=self.ventana_enviar, **btn_green).pack(side="left", padx=15)
+
+        tk.Button(frame_contactos, text="👥 Ver Contactos", command=self.ver_contactos, **btn_style).pack(side="left", padx=5)
+        tk.Button(frame_contactos, text="➕ Nuevo Contacto", command=self.agregar_contacto, **btn_green).pack(side="left", padx=5)
+
+        # --- PANEL CENTRAL ---
+        self.content = tk.Frame(self.root, bg="#f0f2f5", padx=40, pady=30)
+        self.content.pack(fill="both", expand=True)
+
+        self.actualizar_dashboard()
+
+    def actualizar_dashboard(self):
+        for widget in self.content.winfo_children():
+            widget.destroy()
+
+        card = tk.Frame(self.content, bg="white", highlightbackground="#14b685", highlightthickness=2)
+        card.pack(fill="both", expand=True)
+
+        tk.Label(card, text="📌 Panel de Control y Estadísticas", font=("Segoe UI", 16, "bold"), 
+                 bg="white", fg="#14b685").pack(anchor="w", padx=30, pady=(25, 10))
+        
+        tk.Frame(card, bg="#eeeeee", height=2).pack(fill="x", padx=30, pady=10)
+
+        texto_resumen = (f"👤 Cuenta activa: {self.usuario}\n\n"
+                         f"📊 Tu actividad al momento:\n"
+                         f"    • Correos Recibidos: {len(self.correos_recibidos)}\n"
+                         f"    • Correos Enviados: {len(self.correos_enviados)}\n"
+                         f"    • Contactos Guardados: {len(self.contactos)}")
+        
+        tk.Label(card, text=texto_resumen, font=("Segoe UI", 12), bg="white", 
+                 fg="#333333", justify="left").pack(anchor="w", padx=40, pady=10)
+
+    # ==========================================
+    # FUNCIONES (CON GUARDADO AUTOMÁTICO)
+    # ==========================================
+
+    def agregar_contacto(self):
+        v = tk.Toplevel(self.root)
+        v.title("Nuevo Contacto")
+        v.geometry("400x250")
+        v.configure(bg="white")
+        
+        tk.Label(v, text="Nombre:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
+        ent_nom = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_nom.pack()
+        
+        tk.Label(v, text="Apellido:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
+        ent_ape = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_ape.pack()
+        
+        tk.Label(v, text="Correo Electrónico:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(10,2))
+        ent_cor = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_cor.pack()
+        
+        def guardar():
+            n = ent_nom.get()
+            a = ent_ape.get()
+            c = ent_cor.get()
+            if n and a and c:
+                nuevo = ContactoVirtual(n, a, c)
+                self.contactos.append(nuevo)
+                self.guardar_datos_locales() # ¡SE GUARDA!
+                messagebox.showinfo("Éxito", f"El contacto {n} fue guardado correctamente.")
+                self.actualizar_dashboard()
+                v.destroy()
+            else:
+                messagebox.showwarning("Error", "Completa todos los campos.")
+                
+        tk.Button(v, text="💾 Guardar Contacto", command=guardar, bg="#14b685", fg="white", font=("Segoe UI", 10, "bold"), relief="flat", padx=15, pady=5).pack(pady=20)
+
+    def ver_contactos(self):
+        v = tk.Toplevel(self.root)
+        v.title("Mi Libreta de Direcciones")
+        v.geometry("500x350")
+        
         style = ttk.Style()
-        style.configure("Tool.TButton", font=("Segoe UI", 9), padding=5)
+        style.theme_use('clam')
+        style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), background="#14b685", foreground="white")
+
+        tree = ttk.Treeview(v, columns=("Nombre", "Apellido", "Correo"), show="headings")
+        tree.heading("Nombre", text="Nombre del Contacto")
+        tree.heading("Apellido", text="Apellido del Contacto")
+        tree.heading("Correo", text="Correo Electrónico")
+        tree.pack(fill="both", expand=True, padx=15, pady=15)
         
-        # --- 3. Panel de Resumen---
-        self.info_frame = tk.LabelFrame(root, text=" Resumen de Actividad ", padx=20, pady=20, bg="white", font=("Segoe UI", 10, "bold"))
-        self.info_frame.pack(pady=30, padx=30, fill="both", expand=True)
-
-        self.lbl_resumen = tk.Label(self.info_frame, textvariable=self.resumen_text, 
-                                    justify="left", bg="white", font=("Segoe UI", 11), fg="#333")
-        self.lbl_resumen.pack(anchor="nw")
-
-
-
-        # Botones alineados horizontalmente
-        ttk.Button(self.toolbar, text="📥 Simulador Recibir", command=self.simular_recepcion, style="Tool.TButton").pack(side="left", padx=5, pady=5)
-        ttk.Button(self.toolbar, text="📩 Ver Recibidos", command=self.ventana_bandeja_entrada, style="Tool.TButton").pack(side="left", padx=5, pady=5)
-        ttk.Button(self.toolbar, text="📜 Historial Leídos", command=self.ventana_historial_leidos, style="Tool.TButton").pack(side="left", padx=5, pady=5)
-        ttk.Button(self.toolbar, text="📝 Redactar email", command=self.ventana_enviar, style="Tool.TButton").pack(side="left", padx=5, pady=5)
-        ttk.Button(self.toolbar, text="👤 +Contacto", command=self.ventana_contacto, style="Tool.TButton").pack(side="left", padx=5, pady=5)
-        ttk.Button(self.toolbar, text="📇 Ver Contactos", command=self.ventana_ver_contactos, style="Tool.TButton").pack(side="left", padx=5, pady=5)
-
-    def obtener_resumen(self):
-        """Retorna el string con las estadísticas actuales usando los métodos del cliente [cite: 140, 141]"""
-        return (f"👤 Usuario: {self.cliente.cuenta.usuario}\n"
-                f"📧 Dirección: {self.cliente.cuenta.direccion}\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"📊 Estadística de Correos:\n"
-                f"   • Total de correos: {self.cliente.cantidad_total_correos()}\n"
-                f"   • Recibidos: {self.cliente.cantidad_recibidos()}\n"
-                f"   • Mensajes sin leer: {self.cliente.cantidad_no_leidos()}\n"
-                f"   • Agenda de contactos: {len(self.cliente.contactos)}")
-         
-    def ventana_ver_contactos(self):
-        """Punto 1: Muestra los contactos en formato tabla (Treeview)"""
-        ventana = tk.Toplevel(self.root)
-        ventana.title("Agenda de Contactos")
-        ventana.geometry("500x300")
-
-        # Configuración de la Tabla (Treeview)
-        columnas = ("nombre", "apellido", "email")
-        tabla = ttk.Treeview(ventana, columns=columnas, show="headings")
-        
-        # Definir encabezados
-        tabla.heading("nombre", text="Nombre")
-        tabla.heading("apellido", text="Apellido")
-        tabla.heading("email", text="Correo Electrónico")
-        
-        # Ajustar ancho de columnas
-        tabla.column("nombre", width=100)
-        tabla.column("apellido", width=100)
-        tabla.column("email", width=250)
-
-        # Cargar datos desde la lista de objetos 'contactos' del cliente
-        for con in self.cliente.contactos:
-            tabla.insert("", tk.END, values=(con.nombre, con.apellido, con.email))
-
-        tabla.pack(expand=True, fill="both", padx=10, pady=10)
-
-    def ventana_historial_leidos(self):
-        """Punto 2: Permite ver y volver a abrir mensajes ya leídos"""
-        ventana = tk.Toplevel(self.root)
-        ventana.title("Mensajes Leídos")
-        ventana.geometry("400x400")
-
-        tk.Label(ventana, text="Historial de Mensajes Leídos", font=("Arial", 10, "bold")).pack(pady=5)
-
-        lista_leidos = tk.Listbox(ventana, width=50, height=15)
-        lista_leidos.pack(pady=5, padx=10)
-
-        # Filtramos los objetos que tienen la propiedad leido = True
-        objetos_filtrados = [c for c in self.cliente.recibidos if c.leido]
-
-        for correo in objetos_filtrados:
-            lista_leidos.insert(tk.END, f"✅ {correo.asunto} - De: {correo.remitente}")
-
-        def abrir_seleccionado():
-            indice = lista_leidos.curselection()
-            if indice:
-                correo_obj = objetos_filtrados[indice[0]]
-                # Reutilizamos tu lógica de lectura de detalle
-                self.mostrar_contenido_correo(correo_obj)
-
-        tk.Button(ventana, text="Abrir de nuevo", command=abrir_seleccionado, bg="#67addb", fg="white").pack(pady=5)
-
-    def mostrar_contenido_correo(self, correo_obj):
-        """Método auxiliar para mostrar el cuerpo del mensaje"""
-        v_lectura = tk.Toplevel(self.root)
-        v_lectura.title(f"Re-leyendo: {correo_obj.asunto}")
-        v_lectura.geometry("350x250")
-        
-        tk.Label(v_lectura, text=f"Asunto: {correo_obj.asunto}", font=("bold")).pack(pady=5)
-        txt = tk.Text(v_lectura, height=8, width=40)
-        txt.insert(tk.END, correo_obj.mensaje)
-        txt.config(state="disabled")
-        txt.pack(padx=10, pady=10)
-
- 
-    def actualizar_interfaz(self):
-        self.resumen_text.set(self.obtener_resumen())
+        for c in self.contactos:
+            tree.insert("", "end", values=(c.nombre, c.apellido, c.correo))
 
     def simular_recepcion(self):
-        # Creamos una instancia de Correo
-        nuevo = Correo("Aviso de Examen", "El parcial es el lunes 17:00hs. ", "Paula@unsada.edu.ar", [self.cliente.cuenta.direccion])
-        self.cliente.recibidos.append(nuevo)
-        self.actualizar_interfaz()
-        messagebox.showinfo("Bandeja de Entrada", "Has recibido un nuevo correo de Paula.")
-
-    def ventana_contacto(self):
-        ventana = tk.Toplevel(self.root)
-        ventana.title("Nuevo Contacto")
-        ventana.geometry("300x200")
-        
-        tk.Label(ventana, text="Nombre:").pack()
-        ent_nom = tk.Entry(ventana)
-        ent_nom.pack()
-        
-        tk.Label(ventana, text="Apellido:").pack()
-        ent_ape = tk.Entry(ventana)
-        ent_ape.pack()
-        
-        tk.Label(ventana, text="Email:").pack()
-        ent_mail = tk.Entry(ventana)
-        ent_mail.pack()
-
-        def guardar():
-            nuevo_con = Contacto(ent_nom.get(), ent_ape.get(), "", ent_mail.get())
-            self.cliente.agregar_contacto_db(nuevo_con) 
-            self.actualizar_interfaz()
-            ventana.destroy()
-            messagebox.showinfo("Éxito", "Contacto guardado en la base de datos.")
-
-        tk.Button(ventana, text="Guardar", command=guardar, bg="#27ae60", fg="white").pack(pady=10)
+        nuevo_correo = CorreoVirtual("Rectorado UNSADA", self.direccion, "Novedades del cuatrimestre", "Estimado alumno, le informamos que las mesas de exámenes están habilitadas. ¡Saludos!")
+        self.correos_recibidos.append(nuevo_correo)
+        self.guardar_datos_locales() # ¡SE GUARDA!
+        self.actualizar_dashboard()
+        messagebox.showinfo("Servidor Actualizado", "📥 Has recibido 1 correo nuevo. Revisa tu bandeja de entrada.")
 
     def ventana_enviar(self):
-        ventana = tk.Toplevel(self.root)
-        ventana.title("Redactar Nuevo Correo")
-        ventana.geometry("400x350")
-        ventana.configure(pady=10, padx=10)
-
-        tk.Label(ventana, text="Para (Destinatario):").pack(anchor="w")
-        ent_para = tk.Entry(ventana, width=40)
-        ent_para.pack(pady=5)
-
-        tk.Label(ventana, text="Asunto:").pack(anchor="w")
-        ent_asunto = tk.Entry(ventana, width=40)
-        ent_asunto.pack(pady=5)
-
-        tk.Label(ventana, text="Mensaje:").pack(anchor="w")
-        txt_mensaje = tk.Text(ventana, height=5, width=40)
-        txt_mensaje.pack(pady=5)
-
-        def procesar_envio():
-            # Definimos atributos del objeto Correo
-            nuevo_envio = Correo(
-                asunto=ent_asunto.get(),
-                mensaje=txt_mensaje.get("1.0", tk.END),
-                remitente=self.cliente.cuenta.direccion,
-                destinatarios=[ent_para.get()], 
-                leido=True 
-            )
-            
-            # El objeto realiza la acción de enviar
-            self.cliente.enviar_correo(nuevo_envio)
-            self.actualizar_interfaz()
-            ventana.destroy()
-            messagebox.showinfo("Enviado", "El correo se ha movido a la carpeta de Enviados.")
-
-        tk.Button(ventana, text="🚀 Enviar Ahora", command=procesar_envio, 
-                  bg="#67addb", fg="white", font=("Arial", 10, "bold")).pack(pady=10)
-    
-    def ventana_bandeja_entrada(self):
-        # Creamos ventana para listar los objetos Correo
-        self.ventana_lista = tk.Toplevel(self.root)
-        self.ventana_lista.title("Bandeja de Entrada")
-        self.ventana_lista.geometry("400x400")
-
-        tk.Label(self.ventana_lista, text="Correos Recibidos", font=("Arial", 12, "bold")).pack(pady=10)
-
-        # Listbox para visualizar la colección de objetos
-        self.lista_visual = tk.Listbox(self.ventana_lista, width=50, height=15)
-        self.lista_visual.pack(pady=5, padx=10)
-
-        # Accedemos a las propiedades de cada objeto en la lista
-        for correo in self.cliente.recibidos:
-            estado = "[LEÍDO]" if correo.leido else "[NUEVO]"
-            self.lista_visual.insert(tk.END, f"{estado} {correo.asunto} - De: {correo.remitente}")
-
-        tk.Button(self.ventana_lista, text="📖 Leer Correo Seleccionado", 
-                  command=self.leer_correo_detalle, bg="#d67dbc").pack(pady=10)
-
-    def leer_correo_detalle(self):
-        seleccion = self.lista_visual.curselection()
-        if not seleccion:
-            messagebox.showwarning("Atención", "Por favor, seleccioná un correo de la lista.")
-            return
-
-        indice = seleccion[0]
-        correo_obj = self.cliente.recibidos[indice]
-
-        # Cambiamos el valor de la propiedad 'leido' 
-        correo_obj.leido = True
-        self.actualizar_interfaz() 
-
-        ventana_lectura = tk.Toplevel(self.ventana_lista)
-        ventana_lectura.title(f"Leyendo: {correo_obj.asunto}")
-        ventana_lectura.geometry("350x300")
-
-        tk.Label(ventana_lectura, text=f"De: {correo_obj.remitente}", font=("Arial", 10, "bold")).pack(anchor="w", padx=10, pady=5)
-        tk.Label(ventana_lectura, text=f"Asunto: {correo_obj.asunto}").pack(anchor="w", padx=10)
+        v = tk.Toplevel(self.root)
+        v.title("Redactar Correo")
+        v.geometry("500x450")
+        v.configure(bg="white")
         
-        cuerpo = tk.Text(ventana_lectura, height=10, width=40)
-        cuerpo.insert(tk.END, correo_obj.mensaje)
-        cuerpo.config(state="disabled") 
-        cuerpo.pack(pady=10, padx=10)
+        tk.Label(v, text="Para (Elige un contacto o escribe):", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
         
-        ventana_lectura.bind("<Destroy>", lambda e: self.refrescar_bandeja())
+        # ¡NUEVO! Combobox para elegir contactos guardados
+        lista_emails = [c.correo for c in self.contactos]
+        ent_p = ttk.Combobox(v, values=lista_emails, width=52)
+        ent_p.pack()
+        
+        tk.Label(v, text="Asunto:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(10,2))
+        ent_a = tk.Entry(v, width=55, bg="#f8f9fa", relief="solid", bd=1); ent_a.pack()
+        
+        tk.Label(v, text="Mensaje:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(10,2))
+        txt = tk.Text(v, height=10, width=55, bg="#f8f9fa", relief="solid", bd=1); txt.pack()
+        
+        def enviar():
+            dest = ent_p.get()
+            asu = ent_a.get()
+            msj = txt.get("1.0", tk.END).strip()
+            if dest and asu:
+                nuevo = CorreoVirtual(self.direccion, dest, asu, msj)
+                self.correos_enviados.append(nuevo)
+                self.guardar_datos_locales() # ¡SE GUARDA!
+                messagebox.showinfo("Enviado", "🚀 El correo fue enviado con éxito.")
+                self.actualizar_dashboard()
+                v.destroy()
+            else:
+                messagebox.showwarning("Faltan datos", "Debes ingresar destinatario y asunto.")
+                
+        tk.Button(v, text="Enviar Correo", command=enviar, bg="#14b685", fg="white", font=("Segoe UI", 10, "bold"), relief="flat", padx=20, pady=8).pack(pady=15)
 
-    def refrescar_bandeja(self):
-        self.lista_visual.delete(0, tk.END)
-        for correo in self.cliente.recibidos:
-            estado = "[LEÍDO]" if correo.leido else "[NUEVO]"
-            self.lista_visual.insert(tk.END, f"{estado} {correo.asunto} - De: {correo.remitente}")
+    def crear_ventana_lectura(self, titulo, lista_correos, es_recibido=True):
+        v = tk.Toplevel(self.root)
+        v.title(titulo)
+        v.geometry("700x400")
+        
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), background="#14b685", foreground="white")
+
+        col_persona = "De" if es_recibido else "Para"
+        tree = ttk.Treeview(v, columns=(col_persona, "Asunto"), show="headings")
+        tree.heading(col_persona, text=f"Correo {col_persona}")
+        tree.heading("Asunto", text="Asunto")
+        tree.column(col_persona, width=200)
+        tree.column("Asunto", width=450)
+        tree.pack(fill="both", expand=True, padx=15, pady=15)
+        
+        for c in lista_correos:
+            persona = c.remitente if es_recibido else c.destinatario
+            tree.insert("", "end", values=(persona, c.asunto))
             
+        def leer():
+            seleccion = tree.selection()
+            if seleccion:
+                item = tree.item(seleccion[0])
+                persona_sel = item['values'][0]
+                asunto_sel = item['values'][1]
+                
+                for c in lista_correos:
+                    pers = c.remitente if es_recibido else c.destinatario
+                    if pers == persona_sel and c.asunto == asunto_sel:
+                        etiqueta_pers = "Remitente" if es_recibido else "Destinatario"
+                        messagebox.showinfo(f"Lectura de Correo", f"{etiqueta_pers}: {persona_sel}\nAsunto: {asunto_sel}\n\n{'-'*40}\n{c.mensaje}")
+                        break
+            else:
+                messagebox.showwarning("Atención", "Selecciona un correo para leerlo.")
+                
+        tk.Button(v, text="📖 Abrir Mensaje", command=leer, bg="#2c3e50", fg="white", font=("Segoe UI", 10, "bold"), relief="flat", padx=15, pady=8).pack(pady=(0,15))
+
+    def ver_recibidos(self):
+        self.crear_ventana_lectura("Bandeja de Entrada", self.correos_recibidos, es_recibido=True)
+
+    def ver_enviados(self):
+        self.crear_ventana_lectura("Bandeja de Salida (Enviados)", self.correos_enviados, es_recibido=False)
+
 if __name__ == "__main__":
-    from Cliente_Correo import Cuenta
     root = tk.Tk()
     mi_cuenta = Cuenta("Grupo2 Arrecifes", "Grupo2_arrecifes@estudiante.unsada.edu.ar", "pop.gmail.com", "smtp.gmail.com")
     mi_cliente = ClienteCorreo(mi_cuenta)
-    
     app = AppCorreo(root, mi_cliente)
     root.mainloop()
