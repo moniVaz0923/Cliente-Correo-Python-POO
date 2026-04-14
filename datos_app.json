@@ -1,14 +1,14 @@
 {
     "contactos": [
         {
-            "nombre": "monica ",
-            "apellido": "vazquez",
-            "correo": "mv@alumnos.com"
-        },
-        {
             "nombre": "Estefania",
             "apellido": "Coria",
             "correo": "ecoria@alumnos.com"
+        },
+        {
+            "nombre": "Monica",
+            "apellido": "Vazquez",
+            "correo": "mvazquez@alumnos.com"
         }
     ],
     "recibidos": [
@@ -25,14 +25,7 @@
             "remitente": "Grupo2_arrecifes@estudiante.unsada.edu.ar",
             "destinatario": "Rectorado UNSADA",
             "asunto": "Re: Novedades de la cursada",
-            "mensaje": "ok gracias por el aviso.",
-            "leido": false
-        },
-        {
-            "remitente": "Grupo2_arrecifes@estudiante.unsada.edu.ar",
-            "destinatario": "mv@alumnos.com",
-            "asunto": "Aviso",
-            "mensaje": "Trabajo practico terminado. listo para entrega.",
+            "mensaje": "ok gracias!!!",
             "leido": false
         }
     ]

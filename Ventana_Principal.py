@@ -5,7 +5,7 @@ import os
 
 # --- CLASES VIRTUALES (Persistencia asegurada) ---
 class ContactoVirtual:
-    def __init__(self, nombre, apellido,correo):
+    def __init__(self, nombre,apellido, correo):
         self.nombre = nombre
         self.apellido = apellido
         self.correo = correo
@@ -37,7 +37,7 @@ class AppCorreo:
         self.cargar_datos_locales()
 
         self.root.title("UNSADA Mail Pro - Grupo2 Arrecifes")
-        self.root.geometry("950x650") 
+        self.root.geometry("900x650") 
         self.root.configure(bg="#f0f2f5")
 
         self.mostrar_login()
@@ -91,7 +91,7 @@ class AppCorreo:
     def construir_interfaz(self):
         self.root.unbind('<Return>')
         
-        # Header
+        # Header 
         header = tk.Frame(self.root, bg="#14b685", height=70) 
         header.pack(fill="x")
         tk.Label(header, text="✨ UNSADA Mail Pro", bg="#14b685", fg="white", font=("Segoe UI", 18, "bold")).pack(side="left", padx=25, pady=15)
@@ -108,17 +108,14 @@ class AppCorreo:
 
         btn_s = {"font": ("Segoe UI", 9, "bold"), "fg": "white", "bg": "#2c3e50", "relief": "flat", "padx": 10, "pady": 6, "cursor": "hand2"}
         btn_g = {**btn_s, "bg": "#14b685"}
-        btn_r = {**btn_s, "bg": "#e74c3c"}
 
         tk.Button(frame_izq, text="📥 Recibir", command=self.simular_recepcion, **btn_s).pack(side="left", padx=5)
         tk.Button(frame_izq, text="📩 Recibidos", command=self.ver_recibidos, **btn_s).pack(side="left", padx=5)
         tk.Button(frame_izq, text="📤 Enviados", command=self.ver_enviados, **btn_s).pack(side="left", padx=5)
         tk.Button(frame_izq, text="📝 Redactar", command=lambda: self.ventana_enviar(), **btn_g).pack(side="left", padx=15)
-        tk.Button(frame_der, text="🗑️ Vaciar e-mail ", command=self.borrar_historial_total, **btn_r).pack(side="left", padx=15)
 
         tk.Button(frame_der, text="👥 Ver Contactos", command=self.ver_contactos, **btn_s).pack(side="left", padx=5)
         tk.Button(frame_der, text="➕ Nuevo Contacto", command=self.agregar_contacto, **btn_g).pack(side="left", padx=5)
-        
 
         # Dashboard
         self.content = tk.Frame(self.root, bg="#f0f2f5", padx=40, pady=30)
@@ -133,12 +130,10 @@ class AppCorreo:
         tk.Label(card, text="📌 Panel de Control y Estadísticas", font=("Segoe UI", 16, "bold"), bg="white", fg="#14b685").pack(anchor="w", padx=30, pady=(25, 10))
         tk.Frame(card, bg="#eeeeee", height=2).pack(fill="x", padx=30, pady=10)
 
-        # Lógica exacta para el TP
         total_correos = len(self.correos_recibidos) + len(self.correos_enviados)
         recibidos = len(self.correos_recibidos)
         enviados = len(self.correos_enviados)
         contactos = len(self.contactos)
-        # Calcula los no leídos
         no_leidos = sum(1 for c in self.correos_recibidos if not c.leido)
 
         texto_resumen = (f"👤 Cuenta activa: {self.usuario}\n\n"
@@ -155,15 +150,15 @@ class AppCorreo:
     def agregar_contacto(self):
         v = tk.Toplevel(self.root)
         v.title("Nuevo Contacto")
-        v.geometry("600x250")
+        v.geometry("400x250")
         v.configure(bg="white")
         
-        tk.Label(v, text="Nombre:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
+        tk.Label(v, text = "Nombre:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
         ent_nom = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_nom.pack()
         
-        tk.Label(v, text="Apellido:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(10,2))
+        tk.Label(v, text = "Apellido:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(20,2))
         ent_ape = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_ape.pack()
-        
+                
         tk.Label(v, text="Correo Electrónico:", bg="white", font=("Segoe UI", 9, "bold")).pack(anchor="w", padx=25, pady=(10,2))
         ent_cor = tk.Entry(v, width=45, bg="#f8f9fa", relief="solid", bd=1); ent_cor.pack()
         
@@ -174,7 +169,7 @@ class AppCorreo:
             if n and a and c:
                 self.contactos.append(ContactoVirtual(n, a, c))
                 self.guardar_datos_locales() 
-                messagebox.showinfo("Éxito", f"El contacto {n} fue guardado.")
+                messagebox.showinfo("Éxito", f"El contacto de: {n} {a} fue guardado.")
                 self.actualizar_dashboard()
                 v.destroy()
             else:
@@ -197,20 +192,20 @@ class AppCorreo:
     def ver_contactos(self):
         v = tk.Toplevel(self.root)
         v.title("Libreta de Direcciones")
-        v.geometry("600x400")
+        v.geometry("500x400")
 
         frame_tabla = tk.Frame(v)
         frame_tabla.pack(fill="both", expand=True, padx=10, pady=10)
         scrolly = tk.Scrollbar(frame_tabla)
         scrolly.pack(side="right", fill="y")
         
-        tree = ttk.Treeview(frame_tabla, columns=("Nom", "Ape", "Cor"), show="headings", yscrollcommand=scrolly.set)
-        tree.heading("Nom", text="Nombre");tree.heading("Ape", text="Apellido"); tree.heading("Cor", text="Correo")
+        tree = ttk.Treeview(frame_tabla, columns=("Nom","Ape", "Cor"), show="headings", yscrollcommand=scrolly.set)
+        tree.heading("Nom", text="Nombre"); tree.heading("Ape", text="Apellido"); tree.heading("Cor", text="Correo")
         tree.pack(fill="both", expand=True)
         scrolly.config(command=tree.yview)
 
         for c in self.contactos:
-            tree.insert("", "end", values=(c.nombre,c.apellido,c.correo))
+            tree.insert("", "end", values=(c.nombre, c.apellido, c.correo))
 
         def eliminar():
             sel = tree.selection()
@@ -232,8 +227,29 @@ class AppCorreo:
     def ventana_correos(self, titulo, lista, es_recibido):
         v = tk.Toplevel(self.root)
         v.title(titulo)
-        v.geometry("700x400")
+        v.geometry("700x450")
+        v.configure(bg="#f0f2f5")
 
+        # --- SECCIÓN DE BÚSQUEDA ---
+        frame_busqueda = tk.Frame(v, bg="#f0f2f5")
+        frame_busqueda.pack(fill="x", padx=10, pady=(10, 0))
+        
+        tk.Label(frame_busqueda, text="🔍 Buscar por nombre o asunto:", bg="#f0f2f5", font=("Segoe UI", 9, "bold")).pack(side="left")
+        ent_buscar = tk.Entry(frame_busqueda, width=40, font=("Segoe UI", 10))
+        ent_buscar.pack(side="left", padx=5)
+        
+        def buscar(evento=None):
+            refrescar(ent_buscar.get())
+            
+        def limpiar():
+            ent_buscar.delete(0, "end")
+            refrescar()
+
+        tk.Button(frame_busqueda, text="Buscar", command=buscar, bg="#2c3e50", fg="white", relief="flat", cursor="hand2").pack(side="left", padx=2)
+        tk.Button(frame_busqueda, text="✖ Limpiar", command=limpiar, bg="#e74c3c", fg="white", relief="flat", cursor="hand2").pack(side="left", padx=2)
+        v.bind('<Return>', buscar) # Para buscar apretando Enter
+
+        # --- SECCIÓN DE LA TABLA ---
         frame_tabla = tk.Frame(v)
         frame_tabla.pack(fill="both", expand=True, padx=10, pady=10)
         scrolly = tk.Scrollbar(frame_tabla)
@@ -246,39 +262,62 @@ class AppCorreo:
         tree.pack(fill="both", expand=True)
         scrolly.config(command=tree.yview)
 
-        def refrescar():
+        def refrescar(filtro=""):
             tree.delete(*tree.get_children())
-            for c in lista:
+            filtro = filtro.lower()
+            for idx, c in enumerate(lista):
                 p = c.remitente if es_recibido else c.destinatario
-                # Le agregamos un iconito si no está leído para que se note
-                estado = "✉️ " if es_recibido and not c.leido else "📖 "
-                tree.insert("", "end", values=(p, estado + c.asunto))
-        refrescar()
+                # Filtra si el texto coincide con el remitente/destinatario o con el asunto
+                if filtro in p.lower() or filtro in c.asunto.lower():
+                    estado = "✉️ " if es_recibido and not c.leido else "📖 "
+                    # Guardamos el ID original (idx) para que eliminar funcione perfecto aunque esté filtrado
+                    tree.insert("", "end", iid=str(idx), values=(p, estado + c.asunto))
+        
+        refrescar() # Carga inicial
 
         def abrir():
             sel = tree.selection()
             if sel:
-                idx = tree.index(sel[0])
-                item = lista[idx]
+                # Obtenemos el índice real del correo en la lista original
+                idx_real = int(sel[0]) 
+                item = lista[idx_real]
                 
-                # ACÁ ESTÁ LA MAGIA DE "NO LEÍDO" -> "LEÍDO"
                 if es_recibido and not item.leido:
                     item.leido = True
                     self.guardar_datos_locales()
                     self.actualizar_dashboard()
-                    refrescar() # Para sacarle el ícono de sobrecito cerrado
-
+                    refrescar(ent_buscar.get()) # Refresca manteniendo la búsqueda
+                    
                 vl = tk.Toplevel(v)
                 vl.title("Lectura")
-                vl.geometry("400x300")
-                tk.Label(vl, text=f"Asunto: {item.asunto}", font=("bold")).pack(pady=10)
-                txt = tk.Text(vl, height=8); txt.insert("1.0", item.mensaje); txt.pack(padx=10)
+                vl.geometry("400x350")
+                
+                tk.Label(vl, text=f"Asunto: {item.asunto}", font=("bold"), wraplength=380).pack(pady=10)
+                txt = tk.Text(vl, height=8, font=("Segoe UI", 10))
+                txt.insert("1.0", item.mensaje)
+                txt.config(state="disabled") 
+                txt.pack(padx=10, fill="both", expand=True)
+                
+                def eliminar_este_correo():
+                    if messagebox.askyesno("Confirmar", "¿Seguro que querés eliminar este correo?", parent=vl):
+                        lista.pop(idx_real) 
+                        self.guardar_datos_locales() 
+                        self.actualizar_dashboard()  
+                        # Limpiamos el filtro antes de refrescar para evitar errores de índice
+                        ent_buscar.delete(0, 'end')
+                        refrescar() 
+                        vl.destroy() 
+
+                frame_btn = tk.Frame(vl)
+                frame_btn.pack(pady=15)
                 
                 if es_recibido:
-                    tk.Button(vl, text="↩️ Resp1onder", bg="#14b685", fg="white", 
-                              command=lambda: [vl.destroy(), self.ventana_enviar(item.remitente, f"Re: {item.asunto}")]).pack(pady=5)
+                    tk.Button(frame_btn, text="↩️ Responder", bg="#14b685", fg="white", cursor="hand2",
+                              command=lambda: [vl.destroy(), self.ventana_enviar(item.remitente, f"Re: {item.asunto}")]).pack(side="left", padx=10)
+                
+                tk.Button(frame_btn, text="🗑️ Eliminar", bg="#e74c3c", fg="white", cursor="hand2", command=eliminar_este_correo).pack(side="left", padx=10)
         
-        tk.Button(v, text="📖 Leer Mensaje", command=abrir, bg="#2c3e50", fg="white").pack(pady=10)
+        tk.Button(v, text="📖 Leer Mensaje", command=abrir, bg="#2c3e50", fg="white", font=("Segoe UI", 10, "bold"), cursor="hand2", padx=20).pack(pady=(0, 10))
 
     def ventana_enviar(self, para="", asunto=""):
         v = tk.Toplevel(self.root)
@@ -313,14 +352,7 @@ class AppCorreo:
             else:
                 messagebox.showwarning("Atención", "Completá destinatario y asunto.")
 
-        tk.Button(v, text="🚀 Enviar", command=enviar, bg="#14b685", fg="white", padx=20).pack(pady=10)
-
-    def borrar_historial_total(self):
-        if messagebox.askyesnocancel("Peligro", "¿Borrar TODOS los correos?"):
-            self.correos_recibidos = []
-            self.correos_enviados = []
-            self.guardar_datos_locales()
-            self.actualizar_dashboard()
+        tk.Button(v, text="🚀 Enviar", command=enviar, bg="#14b685", fg="white", padx=20, cursor="hand2", font=("Segoe UI", 10, "bold")).pack(pady=10)
 
 if __name__ == "__main__":
     root = tk.Tk()
